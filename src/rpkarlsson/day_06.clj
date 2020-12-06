@@ -3,35 +3,30 @@
             [rpkarlsson.util.file :as file]
             [clojure.set :as set]))
 
-(def by-group-xf
-  (comp
+(def by-group-xf (comp
    (partition-by str/blank?)
    (remove (comp str/blank? first))))
 
 (def distinct-group-answer-set-xf
-  (comp
-   by-group-xf
-   (map #(mapcat identity %))
-   (map #(into #{} %))))
+  (comp by-group-xf (map #(mapcat identity %)) (map #(into #{} %))))
 
-(defn part-1
-  []
-  (->> (file/xf-day-lines 6 distinct-group-answer-set-xf)
-       (map count)
-       (reduce +)))
+(defn total-count [xs]
+  (reduce + (map count xs)))
 
-(def questions
-  (->> "abcdefghijklmnopqrstuvwxyz"
-       (into #{})))
+(defn part-1 []
+  (total-count (file/xf-day-lines 6 distinct-group-answer-set-xf)))
+
+(def questions (into #{} "abcdefghijklmnopqrstuvwxyz"))
 
 (def group-answer-sets-xf
-  (comp
-   by-group-xf
-   (map (partial map #(into #{} %)))))
+  (comp by-group-xf (map (partial map #(into #{} %)))))
 
 (defn part-2
   []
   (->> (file/xf-day-lines 6 group-answer-sets-xf)
        (map #(apply (partial set/intersection questions) %))
-       (map count)
-       (reduce +)))
+       (total-count)))
+
+(comment
+  (part-1)
+  (part-2))
