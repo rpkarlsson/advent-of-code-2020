@@ -30,8 +30,26 @@
     "down" (update acc :aim #(+ % n))
     "up" (update acc :aim #(- % n))))
 
-(defn mul [{:keys [horizontal depth]}]
-  (* horizontal depth))
+(defn mul [{:keys [horizontal depth]}] (* horizontal depth))
+
+(defn part-1
+  []
+  (with-open [f (io/reader (io/resource "2021/day_02.txt"))]
+    (->> (line-seq f)
+         (map #(str/split % #" "))
+         (map (fn [v] (update v 1 #(Integer/parseInt %))))
+         (reduce calculate-position {:horizontal 0 :depth 0 :aim 0})
+         (mul))))
+
+(defn part-2
+  []
+  (with-open [f (io/reader (io/resource "2021/day_02.txt"))]
+    (->> (line-seq f)
+         (map #(str/split % #" "))
+         (map (fn [v] (update v 1 #(Integer/parseInt %))))
+         (reduce calculate-position-2 {:horizontal 0 :depth 0 :aim 0})
+         (mul)))
+  )
 
 (comment
   (->> sample
@@ -40,14 +58,7 @@
        (reduce calculate-position-2 {:horizontal 0 :depth 0 :aim 0})
        (mul))
 
-  (update [1 2] 1 inc)
-
-  (with-open [f (io/reader (io/resource "2021/day_02.txt"))]
-    (->> (line-seq f)
-         (map #(str/split % #" "))
-         (map (fn [v] (update v 1 #(Integer/parseInt %))))
-         (reduce calculate-position-2 {:horizontal 0 :depth 0 :aim 0})
-         (mul)))
-
+  (part-1)
+  (part-2)
 
   ,)
