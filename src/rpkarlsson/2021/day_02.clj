@@ -2,13 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.java.io :as io]))
 
-(def sample
-  ["forward 5"
-   "down 5"
-   "forward 8"
-   "up 3"
-   "down 8"
-   "forward 2"])
+(def sample ["forward 5" "down 5" "forward 8" "up 3" "down 8" "forward 2"])
 
 (defn update-depth
   [{:keys [aim] :as m} n-forward]
@@ -32,24 +26,18 @@
 
 (defn mul [{:keys [horizontal depth]}] (* horizontal depth))
 
-(defn part-1
-  []
+(defn run
+  [position-calculator-fn]
   (with-open [f (io/reader (io/resource "2021/day_02.txt"))]
     (->> (line-seq f)
          (map #(str/split % #" "))
          (map (fn [v] (update v 1 #(Integer/parseInt %))))
-         (reduce calculate-position {:horizontal 0 :depth 0 :aim 0})
+         (reduce position-calculator-fn {:horizontal 0 :depth 0 :aim 0})
          (mul))))
 
-(defn part-2
-  []
-  (with-open [f (io/reader (io/resource "2021/day_02.txt"))]
-    (->> (line-seq f)
-         (map #(str/split % #" "))
-         (map (fn [v] (update v 1 #(Integer/parseInt %))))
-         (reduce calculate-position-2 {:horizontal 0 :depth 0 :aim 0})
-         (mul)))
-  )
+(defn part-1 [] (run calculate-position))
+
+(defn part-2 [] (run calculate-position-2))
 
 (comment
   (->> sample
