@@ -38,14 +38,6 @@
   (winner [[1 2 3] [4 5 6] [7 8 9]] #{1 2 5 8})
   ,)
 
-(defn game-loop
-  [boards all-draws seen-draws]
-  (let [winner (first (filter #(winner %  (into #{} seen-draws)) boards))]
-    (cond
-      (empty? all-draws) :no-match
-      winner [winner seen-draws]
-      :else (recur boards (rest all-draws) (conj seen-draws (first all-draws))))))
-
 (defn sum-score
   [board draws]
   (->> board
@@ -64,37 +56,41 @@
                     (map (partial map (partial map (fn [s] (Integer/parseInt s))))))]
     [boards draw-order]))
 
+(defn draws-seq
+  ([xs]
+   (draws-seq xs 1))
+  ([xs i]
+   (when-not (= i (count xs))
+     (lazy-seq (cons (take i xs) (draws-seq xs (inc i)))))))
+
+(defn find-winners
+  []
+  (let [[boards draw-order] boards+draw-order]
+    (->> (draws-seq draw-order)
+         (reduce (fn [winners draw]
+                   (let [winning-boards (into #{} (mapcat #(map second %) winners))
+                         next-winning-boards (->> boards
+                                                  (reduce (fn [draw-winners next-board]
+                                                            (if (and (not (contains? winning-boards next-board))
+                                                                     (winner next-board (into #{} draw)))
+                                                              (conj draw-winners next-board)
+                                                              draw-winners))
+                                                          []))]
+                     (if (empty? next-winning-boards)
+                       winners
+                       (merge winners
+                              (map #(vector draw %) next-winning-boards)))))
+                 []))))
+
 (defn part-1
   []
-  (let [[boards draw-order] boards+draw-order
-        [winning-board seen-draws] (game-loop boards draw-order [])]
-    (* (last seen-draws) (sum-score winning-board (into #{} seen-draws)))))
-
-(defn last-winner-loop
-  [boards all-draws seen-draws [last-winner winner-draws]]
-  (cond
-    (or (empty? boards)
-        (empty? all-draws))
-    [last-winner winner-draws]
-    :else (let [results (->> boards
-                             (map (fn [board] [board (boolean (winner board (into #{} seen-draws)))])))]
-            (recur (->> results
-                        (remove (comp true? #(nth % 1)))
-                        (map first))
-                   (rest all-draws)
-                   (conj seen-draws (first all-draws))
-                   (let [new-winner (->> results
-                                         (filter (comp any? #(nth % 1)))
-                                         (ffirst))]
-                     (if new-winner
-                       [new-winner seen-draws]
-                       [last-winner winner-draws]))))))
+  (let [[drawn winning-board] (ffirst (find-winners))]
+       (* (last drawn) (sum-score winning-board (into #{} drawn)))))
 
 (defn part-2
   []
-  (let [[boards draw-order] boards+draw-order
-        [last-winning-board seen-draws] (last-winner-loop boards draw-order [] [])]
-    (* (last seen-draws) (sum-score last-winning-board (into #{} seen-draws)))))
+  (let [[drawn winning-board] (last (last (find-winners)))]
+    (* (last drawn) (sum-score winning-board (into #{} drawn)))))
 
 (comment
   (part-1)
