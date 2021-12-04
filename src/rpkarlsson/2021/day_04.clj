@@ -53,8 +53,7 @@
        (remove draws)
        (reduce +)))
 
-(defn part-1
-  []
+(def boards+draw-order
   (let [sections (str/split #_sample (slurp (io/resource "2021/day_04.txt")) #"\n\n")
         draw-order (map #(Integer/parseInt %) (str/split (first sections) #","))
         boards (->> (rest sections)
@@ -62,7 +61,12 @@
                     (map (partial map (fn [s] (str/trim s))))
                     (map (partial map (fn [s] (str/replace s "  " " "))))
                     (map (partial map (fn [s] (str/split s #" "))))
-                    (map (partial map (partial map (fn [s] (Integer/parseInt s))))))
+                    (map (partial map (partial map (fn [s] (Integer/parseInt s))))))]
+    [boards draw-order]))
+
+(defn part-1
+  []
+  (let [[boards draw-order] boards+draw-order
         [winning-board seen-draws] (game-loop boards draw-order [])]
     (* (last seen-draws) (sum-score winning-board (into #{} seen-draws)))))
 
@@ -88,14 +92,7 @@
 
 (defn part-2
   []
-  (let [sections (str/split #_sample (slurp (io/resource "2021/day_04.txt")) #"\n\n")
-        draw-order (mapv #(Integer/parseInt %) (str/split (first sections) #","))
-        boards (->> (rest sections)
-                    (map #(str/split % #"\n"))
-                    (map (partial map (fn [s] (str/trim s))))
-                    (map (partial map (fn [s] (str/replace s "  " " "))))
-                    (map (partial map (fn [s] (str/split s #" "))))
-                    (map (partial map (partial map (fn [s] (Integer/parseInt s))))))
+  (let [[boards draw-order] boards+draw-order
         [last-winning-board seen-draws] (last-winner-loop boards draw-order [] [])]
     (* (last seen-draws) (sum-score last-winning-board (into #{} seen-draws)))))
 
