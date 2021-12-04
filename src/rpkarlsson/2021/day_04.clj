@@ -66,7 +66,42 @@
         [winning-board seen-draws] (game-loop boards draw-order [])]
     (* (last seen-draws) (sum-score winning-board (into #{} seen-draws)))))
 
+(defn last-winner-loop
+  [boards all-draws seen-draws [last-winner winner-draws]]
+  (cond
+    (or (empty? boards)
+        (empty? all-draws))
+    [last-winner winner-draws]
+    :else (let [results (->> boards
+                             (map (fn [board] [board (boolean (winner board (into #{} seen-draws)))])))]
+            (recur (->> results
+                        (remove (comp true? #(nth % 1)))
+                        (map first))
+                   (rest all-draws)
+                   (conj seen-draws (first all-draws))
+                   (let [new-winner (->> results
+                                         (filter (comp any? #(nth % 1)))
+                                         (ffirst))]
+                     (if new-winner
+                       [new-winner seen-draws]
+                       [last-winner winner-draws]))))))
+
+(defn part-2
+  []
+  (let [sections (str/split #_sample (slurp (io/resource "2021/day_04.txt")) #"\n\n")
+        draw-order (mapv #(Integer/parseInt %) (str/split (first sections) #","))
+        boards (->> (rest sections)
+                    (map #(str/split % #"\n"))
+                    (map (partial map (fn [s] (str/trim s))))
+                    (map (partial map (fn [s] (str/replace s "  " " "))))
+                    (map (partial map (fn [s] (str/split s #" "))))
+                    (map (partial map (partial map (fn [s] (Integer/parseInt s))))))
+        [last-winning-board seen-draws] (last-winner-loop boards draw-order [] [])]
+    (* (last seen-draws) (sum-score last-winning-board (into #{} seen-draws)))))
+
 (comment
   (part-1)
+
+  (part-2)
 
   ,)
