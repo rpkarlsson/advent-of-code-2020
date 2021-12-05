@@ -40,14 +40,12 @@
              (range ystart (+ 1 ystart ylength)))))))
 
 (defn expand-lines
-  [[[x1 y1] [x2 y2]]]
-  (let [x1int (Integer/parseInt x1)
-        x2int (Integer/parseInt x2)
-        y1int (Integer/parseInt y1)
-        y2int (Integer/parseInt y2)]
-    (when (or (= x1int x2int)
-              (= y1int y2int))
-      (expand-line [x1int y1int] [x2int y2int]))))
+  [points]
+  (let [[pos1 pos2] (->> points
+                         (map (partial map #(Integer/parseInt %))))]
+    (when (or (= (first pos1) (first pos2))
+              (= (second pos1) (second pos2)))
+      (expand-line pos1 pos2))))
 
 (defn part-1
   []
@@ -71,19 +69,13 @@
           p)))))
 
 (defn expand-lines-2
-  [[[x1 y1] [x2 y2]]]
-(let [x1int (Integer/parseInt x1)
-        x2int (Integer/parseInt x2)
-        xlength (Math/abs (- x2int x1int))
-        y1int (Integer/parseInt y1)
-        y2int (Integer/parseInt y2)
-        ylength (Math/abs (- y2int y1int))]
-  (if-not (or (= x1int x2int)
-          (= y1int y2int))
-    (expand-diagonal [x1int y1int] [x2int y2int])
-    (when-not (and (zero? xlength)
-                   (zero? ylength))
-      (expand-line [x1int y1int] [x2int y2int])))))
+  [points]
+  (let [[pos1 pos2] (->> points
+                         (map (partial map #(Integer/parseInt %))))]
+    (if-not (or (= (first pos1) (first pos2))
+                (= (second pos1) (second pos2)))
+      (expand-diagonal pos1 pos2)
+      (expand-line pos1 pos2))))
 
 (defn part-2
   []
@@ -94,3 +86,9 @@
          (map second)
          (filter #(<= 2 %))
          (count))))
+
+(comment
+  (part-1)
+  (part-2)
+
+  ,)
