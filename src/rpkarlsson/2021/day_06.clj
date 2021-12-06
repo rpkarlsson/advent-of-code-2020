@@ -2,10 +2,6 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]))
 
-(def birthing-rate 6)
-
-(def new-fish-birthing-rate 2)
-
 (def sample  [3,4,3,1,2])
 
 (defn run-loop
