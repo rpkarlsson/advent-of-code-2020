@@ -4,40 +4,33 @@
 (def sample
   [199 200 208 210 200 207 240 269 260 263])
 
-(defn count-increases
-  [{:keys [prev] :as acc} next]
-  (if (< prev next)
-    (-> acc
-        (update :increase inc)
-        (assoc :prev next))
-    (assoc acc :prev next)))
+(def input
+  (with-open [f (io/reader (io/resource "2021/day_01.txt"))]
+    (->> (line-seq f)
+         (map #(Integer/parseInt %))
+         (into []))))
 
 (defn part-1
   []
-  (with-open [f (io/reader (io/resource "2021/day_01.txt"))]
-    (->> (line-seq f)
-         (map #(Integer/parseInt %))
-         (reduce count-increases {:prev 1 :increase -1} ))))
-
+  (->> input
+       (partition-all 2 1)
+       (filter #(apply < %))
+       (rest)
+       (count)))
 
 (defn part-2
   []
-  (with-open [f (io/reader (io/resource "2021/day_01.txt"))]
-    (->> (line-seq f)
-         (map #(Integer/parseInt %))
-         (partition-all 3 1)
-         (map #(reduce + %))
-         (reduce count-increases {:prev 1 :increase -1} ))))
-
-(comment
-  (count-increases {:prev 1 :increase 0} 2)
-
-  (->> sample
+  (->> input
        (partition-all 3 1)
        (map #(reduce + %))
-       (reduce count-increases {:prev 1 :increase -1}))
+       (partition-all 2 1)
+       (filter #(apply < %))
+       (rest)
+       (count)))
 
+(comment
   (part-1)
+
   (part-2)
 
   ,)
