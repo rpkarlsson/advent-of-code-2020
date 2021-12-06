@@ -26,17 +26,9 @@
 ")
 
 (defn winner [board draws]
-  (cond
-    (some #(set/subset? % draws) (map #(into #{} %) board)) board
-    (some #(set/subset? % draws) (map #(into #{} %)(apply map (fn [& args] args) board))) board
-    :else nil))
-
-(comment
-  (winner [[1 2 3] [4 5 6]] #{1 2 3})
-  (winner [[1 2 3] [4 5 6]] #{1 5})
-  (winner [[1 2 3] [4 5 6]] #{1 4})
-  (winner [[1 2 3] [4 5 6] [7 8 9]] #{1 2 5 8})
-  ,)
+  (when (or (some #(set/subset? % draws) (map #(into #{} %) board))
+            (some #(set/subset? % draws) (map #(into #{} %) (apply map vector board))))
+    board))
 
 (defn sum-score
   [board draws]
@@ -69,13 +61,10 @@
     (->> (draws-seq draw-order)
          (reduce (fn [winners draw]
                    (let [winning-boards (into #{} (mapcat #(map second %) winners))
+                         draw-set (into #{} draw)
                          next-winning-boards (->> boards
-                                                  (reduce (fn [draw-winners next-board]
-                                                            (if (and (not (contains? winning-boards next-board))
-                                                                     (winner next-board (into #{} draw)))
-                                                              (conj draw-winners next-board)
-                                                              draw-winners))
-                                                          []))]
+                                                  (remove winning-boards)
+                                                  (keep #(winner % draw-set)))]
                      (if (empty? next-winning-boards)
                        winners
                        (merge winners
@@ -94,7 +83,6 @@
 
 (comment
   (part-1)
-
   (part-2)
 
   ,)
