@@ -25,19 +25,9 @@
 
 (defn expand-line
   [[x1 y1] [x2 y2]]
-  (let [xlength (Math/abs (- x2 x1))
-        xstart (Math/min x1 x2)
-        ylength (Math/abs (- y2 y1))
-        ystart (Math/min y1 y2)]
-    (when-not (and (zero? xlength)
-                   (zero? ylength))
-      (map (fn [x y] [x y])
-           (if (zero? xlength)
-             (repeat x1)
-             (range xstart (+ 1 xstart xlength)))
-           (if (zero? ylength)
-             (repeat y1)
-             (range ystart (+ 1 ystart ylength)))))))
+  (for [x (range (Math/min x1 x2) (inc (Math/max x1 x2)))
+        y (range (Math/min y1 y2) (inc (Math/max y1 y2)))]
+    [x y]))
 
 (defn expand-lines
   [points]
