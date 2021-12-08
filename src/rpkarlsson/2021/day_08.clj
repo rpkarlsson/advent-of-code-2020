@@ -1,5 +1,6 @@
 (ns rpkarlsson.2021.day-08
   (:require [clojure.string :as str]
+            [clojure.math.combinatorics :as combo]
             [clojure.java.io :as io]))
 
 (def sample
@@ -20,7 +21,7 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
 (def digits
   [#{\a \b \c \e \f \g}
    #{\c \f}
-   #{\a \c \d \e \f \g}
+   #{\a \c \d \e \g}
    #{\a \c \d \f \g}
    #{\b \c \d \f}
    #{\a \b \d \f \g}
@@ -49,11 +50,46 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
            (filter selected-digits)
            (count)))))
 
-(comment
-  (let [selected-digits (into #{} (vals (select-keys digits [1 4 7 8])))]
-    (->> (into [] input-xf (str/split sample-2 #"\n"))
-         (map second)
-         (mapcat (partial map set))
-         (filter selected-digits)))
-  ,)
+(def sample-3
+  "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf")
 
+(def default-segments (->> "abcdefg" (map identity)))
+
+(defn find-mapping
+  [input permutations]
+  (->> permutations
+       (reduce (fn [matches next]
+                 (let [found-digits (->> input
+                                         (map (partial map #(.indexOf next %)))
+                                         (map (partial map #(nth default-segments %)))
+                                         (map set)
+                                         (map #(.indexOf digits  %))
+                                         (map #(if (= -1 %) nil %)))]
+                   (conj matches [found-digits next])))
+               [])))
+
+(def permutations (combo/permutations default-segments))
+
+(defn solve-row
+  [row]
+  (let [[signal-pattern output-value] (str/split row #" \| ")
+        input (->> (str/split signal-pattern  #" ")
+                   (map (partial map identity)))
+        working-permutation (->> permutations
+                                 (find-mapping input)
+                                 (filter (comp (partial every? int?) first)))]
+    (->> (str/split output-value  #" ")
+         (map (partial map identity))
+         (map (partial map #(.indexOf (second (first working-permutation)) %)))
+         (map (partial map #(nth default-segments %)))
+         (map set)
+         (map #(.indexOf digits  %)))))
+
+(defn part-2 []
+  (with-open [f (io/reader (io/resource "2021/day_08.txt"))]
+    (->> #_(str/split sample-2 #"\n")
+         (line-seq f)
+         (map solve-row)
+         (map (partial apply str))
+         (map #(Integer/parseInt %))
+         (reduce +))))
