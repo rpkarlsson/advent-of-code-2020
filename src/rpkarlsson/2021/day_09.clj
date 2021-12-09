@@ -1,6 +1,7 @@
 (ns rpkarlsson.2021.day-09
-  (:require [clojure.string :as str]
-            [clojure.java.io :as io]))
+  (:require
+   [clojure.string :as str]
+   [clojure.java.io :as io]))
 
 (def sample
   "2199943210
@@ -56,21 +57,15 @@
   (->> low-points
        (map (fn [point]
               (loop [found-points #{}
-                     coords-to-check [point]]
-                (if (empty? coords-to-check)
+                     queue (conj clojure.lang.PersistentQueue/EMPTY point)]
+                (if (empty? queue)
                   found-points
-                  (let [next-coord (first coords-to-check)
-                        point-value (get-coord grid next-coord)]
-                    (if (or (nil? point-value)
-                            (= 9 point-value)
-                            (contains? found-points next-coord))
-                      (recur found-points (rest coords-to-check))
-                      (recur (conj found-points next-coord)
-                             (rest
-                              (concat
-                               (into [] coords-to-check)
-                               (neighbouring-coords next-coord))))))))))))
-
+                  (let [[coord & rst] queue]
+                    (if (or (contains? #{nil 9} (get-coord grid coord))
+                            (contains? found-points coord))
+                      (recur found-points rst)
+                      (recur (conj found-points coord)
+                             (apply conj rst (neighbouring-coords coord)))))))))))
 
 (defn part-2 []
   (->> (all-coords grid)
