@@ -61,8 +61,7 @@
                            (= :flash v))
                      new-grid
                      (update-in new-grid neighbour inc))))
-               (mapv #(into [] %) g))
-       ))
+               (mapv #(into [] %) g))))
 
 (defn find-flashing
   [grid]
@@ -111,7 +110,19 @@
     result))
 
 
+(defn part-2
+  []
+  (->> (range 1000000)
+       (reduce (fn [result index]
+                 (let [next-result (step result)]
+                   (if (every? zero? (mapcat identity next-result))
+                     (reduced (inc index))
+                     next-result)))
+               #_sample
+               input)))
+
 (comment
   (part-1)
+  (part-2)
 
   ,)
