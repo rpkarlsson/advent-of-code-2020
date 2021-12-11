@@ -84,9 +84,7 @@
 
 (defn step
   [grid]
-  (let [incremented-grid (mapv (partial map inc)
-                               grid)]
-
+  (let [incremented-grid (mmap inc grid)]
     (loop [iteration incremented-grid]
       (if-not (will-flash? iteration)
         iteration
