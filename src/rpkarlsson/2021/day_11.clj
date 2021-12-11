@@ -1,10 +1,17 @@
 (ns rpkarlsson.2021.day-11
   (:require [clojure.string :as str]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [rpkarlsson.utils :refer :all]))
 
+(def parse-input-xform
+  (comp
+   (mmap str)
+   (mmap parse-long)))
 
 (def sample
-  (->>  (str/split "5483143223
+  (into [] parse-input-xform
+        (str/split
+         "5483143223
 2745854711
 5264556173
 6141336146
@@ -13,27 +20,26 @@
 2176841721
 6882881134
 4846848554
-5283751526" #"\n")
-        (map (partial map str))
-        (map (partial map parse-long))))
+5283751526" #"\n")))
 
 (def input
   (with-open [f (io/reader (io/resource "2021/day_11.txt"))]
-    (->> (line-seq f)
-         (map (partial map str))
-         (mapv (partial map parse-long)))))
+    (into [] parse-input-xform (line-seq f))))
+
+(defn flashing? [x]
+  (and (number? x) (< 9 x)))
 
 (defn will-flash?
   [grid]
   (->> grid
        (mapcat identity)
        (remove keyword?)
-       (some #(< 9 %))))
+       (some flashing?)))
 
 (defn flash
   [row]
   (->> row
-       (map #(if (and (number? %)(< 9 %)) :flash %))))
+       (map #(if (flashing? %) :flash %))))
 
 (defn all-coords
   [grid]
@@ -41,52 +47,40 @@
         y (range (count (first grid)))]
     [x y]))
 
+(def all-coords-seq
+  (all-coords input))
+
 (defn get-coord
   [grid [x y]]
   (nth (nth grid x nil) y nil))
 
 (defn neighbour-coords
-  [[x y]]
-  (vector
-   [(dec x) (dec y)] [(dec x) y] [(dec x) (inc y)]
-   [x (dec y)]                   [x (inc y)]
-   [(inc x) (dec y)] [(inc x) y] [(inc x) (inc y)]))
+  [[x y :as coord]]
+  (for [x1 (range -1 2)
+        y1 (range -1 2)
+        :when (not= coord  [(+ x x1) (+ y y1)])]
+    [(+ x x1) (+ y y1)]))
+
+(def valid-non-flashing? (every-pred (complement nil?) (complement #{:flash})))
 
 (defn inc-neighbour
   [g coord]
   (->> (neighbour-coords coord)
        (reduce (fn [new-grid neighbour]
-                 (let [v (get-coord g neighbour)]
-                   (if (or (nil? v)
-                           (= :flash v))
-                     new-grid
-                     (update-in new-grid neighbour inc))))
+                 (if (valid-non-flashing? (get-coord g neighbour))
+                   (update-in new-grid neighbour inc)
+                   new-grid))
                (mapv #(into [] %) g))))
-
-(defn find-flashing
-  [grid]
-  (->> (all-coords grid)
-       (reduce (fn [coll next-coord]
-                 (if (and (number? (get-coord grid next-coord))
-                          (< 9  (get-coord grid next-coord)))
-                   (conj coll next-coord)
-                   coll))
-               [])))
-
-(def flashes (atom 0))
 
 (defn inc-neighbours
   [grid]
-  (let [flashing-coords
-        (->> (find-flashing grid))
-        next-grid
-        (->> flashing-coords
-
-             (reduce inc-neighbour (mapv flash grid)))]
+  (let [next-grid (->> all-coords-seq
+                       (filter #(flashing? (get-coord grid %)))
+                       (reduce inc-neighbour (map flash grid)))]
     (if (not= grid next-grid)
       (recur next-grid)
       (->> next-grid
-           (mapv (partial map #(if (= :flash %) (do (swap! flashes inc) 0) %)))))))
+           (mmap #(if (= :flash %) 0 %))))))
 
 (defn step
   [grid]
@@ -98,28 +92,23 @@
         iteration
         (recur (inc-neighbours iteration))))))
 
-
 (defn part-1
   []
-  (->> (range 100)
-       (reduce (fn [result _]
-                 (step result))
-               input))
-  (let [result @flashes]
-    (reset! flashes 0)
-    result))
-
+  (->> (loop [steps (list input)]
+         (if (< 100 (count steps))
+           steps
+           (recur (conj steps (step (first steps))))))
+       (mapcat (partial mapcat identity))
+       (filter zero?)
+       (count)))
 
 (defn part-2
   []
-  (->> (range 1000000)
-       (reduce (fn [result index]
-                 (let [next-result (step result)]
-                   (if (every? zero? (mapcat identity next-result))
-                     (reduced (inc index))
-                     next-result)))
-               #_sample
-               input)))
+  (->> (loop [steps (list (step input))]
+         (if (every? zero? (mapcat identity (first steps)))
+           steps
+           (recur (conj steps (step (first steps))))))
+       (count)))
 
 (comment
   (part-1)
