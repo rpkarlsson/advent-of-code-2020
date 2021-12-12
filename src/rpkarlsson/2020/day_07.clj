@@ -1,4 +1,4 @@
-(ns rpkarlsson.day-07
+(ns rpkarlsson.2020.day-07
   (:require [clojure.string :as str]
             [rpkarlsson.util.file :as file]))
 

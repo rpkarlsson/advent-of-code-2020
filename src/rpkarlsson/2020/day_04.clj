@@ -1,4 +1,4 @@
-(ns rpkarlsson.day-04
+(ns rpkarlsson.2020.day-04
   (:require
    [clojure.set :as set]
    [clojure.spec.alpha :as s]

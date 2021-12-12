@@ -1,4 +1,4 @@
-(ns rpkarlsson.day-09
+(ns rpkarlsson.2020.day-09
   (:require [rpkarlsson.util.file :as file]))
 
 (defn any-eq

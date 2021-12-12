@@ -1,4 +1,4 @@
-(ns rpkarlsson.day-10
+(ns rpkarlsson.2020.day-10
   (:require [rpkarlsson.util.file :as file]))
 
 (defn find-connectable

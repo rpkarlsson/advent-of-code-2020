@@ -1,4 +1,4 @@
-(ns rpkarlsson.day-05
+(ns rpkarlsson.2020.day-05
   (:require
    [criterium.core :as c]
    [clojure.set :as set]

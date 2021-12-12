@@ -1,4 +1,4 @@
-(ns rpkarlsson.day-03
+(ns rpkarlsson.2020.day-03
   (:require
    [criterium.core :as c]
    [rpkarlsson.util.file :as file]))

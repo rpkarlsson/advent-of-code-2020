@@ -1,4 +1,4 @@
-(ns rpkarlsson.day-12
+(ns rpkarlsson.2020.day-12
   (:require
    [rpkarlsson.util.file :as file]))
 
