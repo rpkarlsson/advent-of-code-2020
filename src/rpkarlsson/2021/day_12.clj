@@ -98,7 +98,53 @@ start-RW")
   []
   (count (get-paths)))
 
+
+
+(defn step-2
+  []
+  (let [cave->path (->> #_parsed-sample
+                        input
+                        (mapcat (juxt identity reverse))
+                        (remove (comp #{"start"} second))
+                        (group-by first)
+                        (map (fn [[k v]] [k (map second v)]))
+                        (into {}))]
+    (loop [paths []
+           queue '(["start"])]
+      (let [first-in-queue (first queue)
+            current-cave (last first-in-queue)
+            next-paths (get cave->path current-cave)
+            next (if (empty? (->> first-in-queue
+                                  (frequencies)
+                                  (filter (fn [[k _]] (= (str/lower-case k) k)))
+                                  (filter (fn [[_ v]] (< 1 v)))))
+                   (->> next-paths
+                        (map #(conj first-in-queue %)))
+                   (->> next-paths
+                        (remove (into #{} (filter #(= (str/lower-case %) %)) first-in-queue))
+                        (map #(conj first-in-queue %))))]
+        (cond
+          (empty? queue)
+          paths
+
+          (#{"end"} current-cave)
+          (recur (conj paths first-in-queue)
+                 (rest queue))
+
+          (seq next)
+          (recur paths
+                 (concat next (rest queue)))
+
+          :else
+          (recur paths
+                 (let [return (str (second (reverse first-in-queue)))]
+                   (if (= return (str/upper-case return))
+                     (conj (rest queue)
+                           (conj first-in-queue return))
+                     (rest queue)))))))))
+
 (comment
   (part-1)
+  (count (step-2))
 
   ,)
