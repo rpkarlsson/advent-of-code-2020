@@ -25,8 +25,8 @@
 (defn get-paths
   [next-fn]
   (loop [paths []
-         queue '(["start"])]
-    (let [first-in-queue (first queue)
+         queue (conj clojure.lang.PersistentQueue/EMPTY ["start"])]
+    (let [first-in-queue (peek queue)
           current-cave (last first-in-queue)
           next (next-fn first-in-queue)]
       (cond
@@ -35,14 +35,13 @@
 
         (#{"end"} current-cave)
         (recur (conj paths first-in-queue)
-               (rest queue))
+               (pop queue))
 
         (seq next)
-        (recur paths
-               (concat next (rest queue)))
+        (recur paths (apply conj (pop queue) next))
 
         :else
-        (recur paths (rest queue))))))
+        (recur paths (pop queue))))))
 
 (defn part-1
   []
@@ -58,9 +57,10 @@
           (fn [path]
             (let [small-caves-with-many-visits
                   (->> path
-                       (frequencies)
-                       (filter (comp #(= % (str/lower-case %)) first))
-                       (filter (comp #(< 1 %) second)))]
+                       (group-by identity)
+                       (filter (fn [[k v]]
+                                 (and (< 1 (count v))
+                                      (= k (str/lower-case k))))))]
               (cond->> (get cave->path (last path))
                 (seq small-caves-with-many-visits)
                 (remove (into #{} (filter #(= (str/lower-case %) %)) path))
