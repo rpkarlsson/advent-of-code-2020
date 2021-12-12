@@ -1,49 +1,8 @@
 (ns rpkarlsson.2021.day-12
   (:require
+   [clojure.java.io :as io]
    [clojure.string :as str]
-   [rpkarlsson.utils :refer :all]
-   [clojure.java.io :as io]))
-
-(def sample
-  "start-A
-start-b
-A-c
-A-b
-b-d
-A-end
-b-end")
-
-(def sample-2
- "dc-end
-HN-start
-start-kj
-dc-start
-dc-HN
-LN-dc
-HN-end
-kj-sa
-kj-HN
-kj-dc")
-
-(def sample-3
-  "fs-end
-he-DX
-fs-he
-start-DX
-pj-DX
-end-zg
-zg-sl
-zg-pj
-pj-he
-RW-he
-fs-DX
-pj-RW
-zg-RW
-start-pj
-he-WI
-zg-he
-pj-fs
-start-RW")
+   [rpkarlsson.utils :refer :all]))
 
 (def parse-input-xform
   (comp
@@ -51,100 +10,66 @@ start-RW")
    (mmap #(str/split % #"-"))
    (map (partial mapcat identity))))
 
-(def parsed-sample
-  (into [] parse-input-xform (str/split sample-3 #"\n")))
-
 (def input
   (with-open [f (io/reader (io/resource "2021/day_12.txt"))]
     (into [] parse-input-xform (line-seq f))))
 
+(def cave->path
+  (->> input
+       (mapcat (juxt identity reverse))
+       (remove (comp #{"start"} second))
+       (group-by first)
+       (map (fn [[k v]] [k (map second v)]))
+       (into {})))
+
 (defn get-paths
-  []
-  (let [cave->path (->> #_parsed-sample
-                        input
-                        (mapcat (juxt identity reverse))
-                        (remove (comp #{"start"} second))
-                        (group-by first)
-                        (map (fn [[k v]] [k (map second v)]))
-                        (into {}))]
-    (loop [paths []
-           queue '(["start"])]
-      (let [first-in-queue (first queue)
-            current-cave (last first-in-queue)
-            next (->> (get cave->path current-cave)
-                      (remove (into #{} (filter #(= (str/lower-case %) %))first-in-queue))
-                      (map #(conj first-in-queue %)))]
-        (cond
-          (empty? queue)
-          paths
+  [next-fn]
+  (loop [paths []
+         queue '(["start"])]
+    (let [first-in-queue (first queue)
+          current-cave (last first-in-queue)
+          next (next-fn first-in-queue)]
+      (cond
+        (empty? queue)
+        paths
 
-          (#{"end"} current-cave)
-          (recur (conj paths first-in-queue)
-                 (rest queue))
+        (#{"end"} current-cave)
+        (recur (conj paths first-in-queue)
+               (rest queue))
 
-          (seq next)
-          (recur paths
-                 (concat next (rest queue)))
+        (seq next)
+        (recur paths
+               (concat next (rest queue)))
 
-          :else
-          (recur paths
-                 (let [return (str (second (reverse first-in-queue)))]
-                   (if (= return (str/upper-case return))
-                     (conj (rest queue)
-                           (conj first-in-queue return))
-                     (rest queue)))))))))
+        :else
+        (recur paths (rest queue))))))
 
 (defn part-1
   []
-  (count (get-paths)))
+  (count (get-paths
+          (fn [path]
+            (->> (get cave->path (last path))
+                 (remove (into #{} (filter #(= (str/lower-case %) %)) path))
+                 (map #(conj path %)))))))
 
-
-
-(defn step-2
+(defn part-2
   []
-  (let [cave->path (->> #_parsed-sample
-                        input
-                        (mapcat (juxt identity reverse))
-                        (remove (comp #{"start"} second))
-                        (group-by first)
-                        (map (fn [[k v]] [k (map second v)]))
-                        (into {}))]
-    (loop [paths []
-           queue '(["start"])]
-      (let [first-in-queue (first queue)
-            current-cave (last first-in-queue)
-            next-paths (get cave->path current-cave)
-            next (if (empty? (->> first-in-queue
-                                  (frequencies)
-                                  (filter (fn [[k _]] (= (str/lower-case k) k)))
-                                  (filter (fn [[_ v]] (< 1 v)))))
-                   (->> next-paths
-                        (map #(conj first-in-queue %)))
-                   (->> next-paths
-                        (remove (into #{} (filter #(= (str/lower-case %) %)) first-in-queue))
-                        (map #(conj first-in-queue %))))]
-        (cond
-          (empty? queue)
-          paths
+  (count (get-paths
+          (fn [path]
+            (let [small-caves-with-many-visits
+                  (->> path
+                       (frequencies)
+                       (filter (comp #(= % (str/lower-case %)) first))
+                       (filter (comp #(< 1 %) second)))]
+              (cond->> (get cave->path (last path))
+                (seq small-caves-with-many-visits)
+                (remove (into #{} (filter #(= (str/lower-case %) %)) path))
 
-          (#{"end"} current-cave)
-          (recur (conj paths first-in-queue)
-                 (rest queue))
-
-          (seq next)
-          (recur paths
-                 (concat next (rest queue)))
-
-          :else
-          (recur paths
-                 (let [return (str (second (reverse first-in-queue)))]
-                   (if (= return (str/upper-case return))
-                     (conj (rest queue)
-                           (conj first-in-queue return))
-                     (rest queue)))))))))
+                :always
+                (map #(conj path %))))))))
 
 (comment
   (part-1)
-  (count (step-2))
+  (part-2)
 
   ,)
