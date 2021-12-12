@@ -70,7 +70,10 @@ start-RW")
     (loop [paths []
            queue '(["start"])]
       (let [first-in-queue (first queue)
-            current-cave (last first-in-queue)]
+            current-cave (last first-in-queue)
+            next (->> (get cave->path current-cave)
+                      (remove (into #{} (filter #(= (str/lower-case %) %))first-in-queue))
+                      (map #(conj first-in-queue %)))]
         (cond
           (empty? queue)
           paths
@@ -79,18 +82,17 @@ start-RW")
           (recur (conj paths first-in-queue)
                  (rest queue))
 
-          (get cave->path current-cave)
+          (seq next)
           (recur paths
-                 (let [next (->> (get cave->path current-cave)
-                                 (remove (into #{} (filter #(= (str/lower-case %) %))first-in-queue))
-                                 (map #(conj first-in-queue %)))]
-                   (if (seq next)
-                     (concat next (rest queue))
-                     (let [return (str (second (reverse first-in-queue)))]
-                       (if (= return (str/upper-case return))
-                         (conj (rest queue)
-                               (conj first-in-queue return))
-                         (rest queue)))))))))))
+                 (concat next (rest queue)))
+
+          :else
+          (recur paths
+                 (let [return (str (second (reverse first-in-queue)))]
+                   (if (= return (str/upper-case return))
+                     (conj (rest queue)
+                           (conj first-in-queue return))
+                     (rest queue)))))))))
 
 (defn part-1
   []
