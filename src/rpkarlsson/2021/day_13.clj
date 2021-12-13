@@ -51,7 +51,7 @@ fold along x=5")
 
 (defn fold-horizontal
   [n grid]
-  (let [[a b] (split-at-row 7 grid)]
+  (let [[a b] (split-at-row n grid)]
     (group-by second
               (concat
                (mapcat second a)
@@ -73,23 +73,52 @@ fold along x=5")
                     (mapcat (fn [[k v]]
                               (map (fn [[_ r]] [k r]) v))))))))
 
-(def input
-  (->> (slurp (io/resource "2021/day_13.txt"))))
+(def input (slurp (io/resource "2021/day_13.txt")))
+
+(defn fold
+  []
+  (let [[d f] (str/split input #_sample #"\n\n")]
+    (->> (loop [grid (->> (parse-dots d)
+                          (group-by second))
+                coll []
+                [[fold-op fold-nth] & folds] (parse-folds f)]
+           (if-not fold-op
+             coll
+             (let [next-grid (if (#{"x"} fold-op)
+                               (fold-vertical (parse-long fold-nth) grid )
+                               (fold-horizontal (parse-long fold-nth) grid))]
+               (recur next-grid (conj coll next-grid) folds)))))))
 
 (defn part-1
   []
-  (let [[d f] (str/split input #_sample #"\n\n")
-        dots (parse-dots d)]
-    (->> (loop [grid (->> dots
-                          (group-by second))
-                [[fold-op fold-nth] & folds] (take 1 (parse-folds f))]
-           (if (#{"x"} fold-op)
-             (fold-vertical (parse-long fold-nth) grid )
-             (fold-horizontal (parse-long fold-nth) grid)))
-         (mapcat (comp #(into #{} %) second))
-         (count))))
+  (->> (fold)
+       (first)
+       (mapcat (comp #(into #{} %) second))
+       (count)))
+
+(defn render
+  [grid]
+  (let [max-row (->> grid keys sort last inc)
+        max-col (->> grid
+                     vals
+                     (mapcat (partial map first))
+                     sort
+                     last
+                     inc)]
+    (->> (range max-row)
+         (map (fn [row]
+                (let [points (->> (get grid row)
+                                  (into #{}))]
+                  (->> (range max-col)
+                       (map #(if (contains? points [% row]) "■" " ")))))))))
+
+(defn part-2
+  []
+  (doseq [r (render (last (fold)))]
+    (println r)))
 
 (comment
   (part-1)
+  (part-2)
 
   ,)
