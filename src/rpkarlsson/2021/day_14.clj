@@ -26,35 +26,62 @@ CN -> C")
 
 (def parsed-sample
   (let [[template insertions] (str/split sample #"\n\n")]
-    [template (->> (str/split-lines insertions)
-                   (map #(str/split % #" -> "))
-                   (into {}))]))
+    [(map identity template)
+     (->> (str/split-lines insertions)
+                     (map #(str/split % #" -> "))
+                     (map (fn [[k v]]
+                            [(map identity k)
+                             (first v)]))
+
+                     (into {}))]))
 
 (def parsed-input
   (let [[template insertions] (str/split (slurp (io/resource "2021/day_14.txt")) #"\n\n")]
-    [template (->> (str/split-lines insertions)
-                   (map #(str/split % #" -> "))
-                   (into {}))]))
+    [(map identity template)
+     (->> (str/split-lines insertions)
+          (map #(str/split % #" -> "))
+          (map (fn [[k v]]
+                 [(map identity k)
+                  (first v)]))
+          (into {}))]))
 
-(defn solve
-  [input steps]
-  (let [[template insertion-rules] input]
-    (loop [polymer template
-           taken-steps 0]
-      (if (<= steps taken-steps)
-        polymer
-        (let [next-polymer (str (first polymer)
-                                (->> polymer
-                                     (partition 2 1)
-                                     (map (fn [pair]
-                                            (apply str (flatten [(get insertion-rules (apply str pair)) (second pair)]))))
-                                     (apply str)))]
-          (recur next-polymer (inc taken-steps)))))))
+(defn solve [steps]
+  (let [[template insertion-rules] parsed-input]
+    (loop [taken-steps 0
+           p (->> template
+                  (partition-all 2 1)
+                  (frequencies))]
+      (if (= taken-steps steps)
+        p
+        (recur (inc taken-steps)
+               (->> p
+                    (reduce (fn [coll [k v]]
+                              (let [insertion (get insertion-rules k)]
+                                (if-not insertion
+                                  (update coll k (fnil + 0) v)
+                                  (-> coll
+                                      (update [(first k) insertion] (fnil + 0) v)
+                                      (update [insertion (second k)] (fnil + 0) v)))))
+                            {})))))))
 
 (defn part-1
   []
-  (let [elements-by-q (->> (solve parsed-input 10)
-                           (frequencies)
+  (let [elements-by-q (->> (solve 10)
+                           (reduce (fn [coll [[a b] v]]
+                                     (-> coll
+                                         (update a (fnil + 0) v)))
+                                   {})
+                           (sort-by second))]
+    (- (second (last elements-by-q))
+       (second (first elements-by-q)))))
+
+(defn part-2
+  []
+  (let [elements-by-q (->> (solve 40)
+                           (reduce (fn [coll [[a b] v]]
+                                     (-> coll
+                                         (update a (fnil + 0) v)))
+                                   {})
                            (sort-by second))]
     (- (second (last elements-by-q))
        (second (first elements-by-q)))))
