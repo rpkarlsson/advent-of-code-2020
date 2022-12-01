@@ -38,7 +38,7 @@
   []
   (first (sum-by-elf (slurp "resources/2022/day_01.txt"))))
 
-(defn part -2
+(defn part-2
   []
   (->> "resources/2022/day_01.txt"
        slurp
