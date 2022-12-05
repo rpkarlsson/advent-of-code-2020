@@ -13,13 +13,6 @@ move 3 from 1 to 3
 move 2 from 2 to 1
 move 1 from 1 to 2")
 
-(defn parse-initial
-  [s]
-  (->> (-> (str/trim s)
-          (str/split-lines))
-       (map #(str/split % #" "))
-       (map #(remove str/blank? %))))
-
 (defn parse-moves
   [s]
   (->> (str/split-lines s)
