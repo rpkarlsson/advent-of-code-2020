@@ -2,22 +2,12 @@
   (:require [clojure.string :as str]
             [rpkarlsson.utils :as u]))
 
-(defn neighbour-coords
-  [[x y]]
-  [[(dec x) y]
-   [x (dec y)]
-   [x (inc y)]
-   [(inc x) y]])
-
 (def sample
   "30373
 25512
 65332
 33549
 35390")
-
-(defn find-visible
-  [])
 
 (defn all-coords-in-grid
   [g]
@@ -28,32 +18,64 @@
 (defn get-coord [grid [x y]]
   (get (get grid x) y))
 
-(apply mapv vector
-       [[1 2 3 4 5]
-        [1 2 3 4 5]
-        [1 2 3 4 5]])
-
-(defn visible-in-row? [grid [x y :as coord]]
-  (let [value (get-coord grid coord)
-        [before after] (split-at (inc y) (get grid x))]
-    (or (every? #(< % value) (butlast before))
-        (every? #(< % value)  after))))
-
-(defn visible-in-column? [grid [x y :as coord]]
-  (let [value (get-coord grid coord)
-        [before after] (split-at (inc x) (get (apply mapv vector grid) y))]
-    (or (every? #(< % value) (butlast before))
-        (every? #(< % value)  after))))
+(defn visible-in-line? [value [before after]]
+  (or (every? #(< % value) (butlast before))
+      (every? #(< % value) after)))
 
 (defn visible?
   [grid [x y :as coord]]
-  (if (neg? (min x y))
-    true
-    (or (visible-in-row? grid coord)
-        (visible-in-column? grid coord))))
+  (let [value (get-coord grid coord)]
+    (or (visible-in-line?
+         value
+         (split-at (inc y) (get grid x)))
+        (visible-in-line?
+         value
+         (split-at (inc x) (get (apply mapv vector grid) y))))))
 
-(let [grid (->> sample str/split-lines (u/mmap (comp parse-long str)) (map vec) vec)]
-  (->> (all-coords-in-grid grid)
-       (map (partial visible? grid))
-       (filter true?)
-       count))
+(defn solve
+  [input]
+  (let [grid (->> input str/split-lines (u/mmap (comp parse-long str)) (map vec) vec)]
+    (->> (all-coords-in-grid grid)
+         (map (partial visible? grid))
+         (filter true?)
+         count)))
+
+#_(solve sample)
+#_(->> "resources/2022/day_08.txt" slurp solve)
+
+(defn take-upto [n coll]
+  (transduce
+   (halt-when #(<= n %) conj)
+   conj coll))
+
+(defn viewing-distance-in-selection [value [before after]]
+  [(->> (butlast before)
+        reverse
+        (take-upto value)
+        (count))
+   (->> after
+        (take-upto value)
+        (count))])
+
+(defn viewing-distance
+  [grid [x y :as coord]]
+  (let [value (get-coord grid coord)]
+    (vec (concat (viewing-distance-in-selection
+                  value
+                  (split-at (inc y) (get grid x)))
+                 (viewing-distance-in-selection
+                  value
+                  (split-at (inc x) (get (apply mapv vector grid) y)))))))
+
+(defn solve-2
+  [input]
+  (let [grid (->> input str/split-lines (u/mmap (comp parse-long str)) (map vec) vec)]
+    (->> (all-coords-in-grid grid)
+         (map (partial viewing-distance? grid))
+         (map #(reduce * %))
+         (sort)
+         (reverse)
+         (first))))
+
+#_(solve-2 sample)
+#_(->> "resources/2022/day_08.txt" slurp solve-2)
