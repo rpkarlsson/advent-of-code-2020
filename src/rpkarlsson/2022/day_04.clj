@@ -3,7 +3,6 @@
             [rpkarlsson.utils :as u]
             [clojure.set :as set]))
 
-
 (def sample
   "2-4,6-8
 2-3,4-5
@@ -15,30 +14,26 @@
 (defn parse
   [s]
   (->> (str/split-lines s)
-       (map #(str/split % #","))
-       (u/mmap #(str/split % #"-"))
-       (u/mmap (partial map #(Integer/parseInt %)))
-       (mapcat identity)))
+       (sequence (comp (map #(re-seq #"(\d+)-(\d+)" %))
+                       (u/mcatmap (juxt second #(nth % 2)))
+                       (u/mmap parse-long)))))
 
 (defn overlaps?
-  [[a b]]
-  (let [a-range (apply range (update-in (vec a) [1] inc))
-        b-range (apply range (update-in (vec b) [1] inc))]
-    (or
-     (set/subset? (set a-range) (set b-range))
-     (set/subset? (set b-range) (set a-range)))))
+  [[[x1 y1] [x2 y2]]]
+  (or (<= x1 x2 y2 y1)
+      (<= x2 x1 y1 y2)))
 
 (defn solve-1
   [s]
-  (->> s
-       parse
+  (->> (parse s)
        (partition-all 2)
-       (map overlaps?)))
+       (map overlaps?)
+       (filter true?)
+       (count)))
 
-#_(->> sample solve-1 (filter true?) count)
+#_(->> sample solve-1)
 
-#_(->> "resources/2022/day_04.txt" slurp solve-1 (filter true?) count)
-
+#_(->> "resources/2022/day_04.txt" slurp solve-1)
 
 (defn any-overlap?
   [[a b]]
@@ -48,11 +43,11 @@
 
 (defn solve-2
   [s]
-  (->> s
-       parse
+  (->> (parse s)
        (partition-all 2)
-       (map any-overlap?)))
+       (keep any-overlap?)
+       (count)))
 
-#_(->> sample solve-2 (remove nil?) count)
+#_(->> sample solve-2)
 
-#_(->> "resources/2022/day_04.txt" slurp solve-2 (remove nil?) count)
+#_(->> "resources/2022/day_04.txt" slurp solve-2)

@@ -7,6 +7,13 @@
   ([f coll]
    (map (partial map f) coll)))
 
+
+(defn mcatmap
+  ([f]
+   (mapcat (partial map f)))
+  ([f coll]
+   (map (partial map f) coll)))
+
 (defn generate-coords-in-grid
   "Given a grid of size `x` and `y` generates all coords in that grid."
   [x y]
