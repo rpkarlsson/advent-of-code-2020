@@ -1,5 +1,7 @@
 (ns rpkarlsson.2022.day-11
-  (:require [clojure.string :as str]))
+  (:require
+   [clojure.string :as str]
+   [clojure.math.numeric-tower :as nt]))
 
 (def sample
   "Monkey 0:
@@ -32,17 +34,19 @@ Monkey 3:
 
 (defn parse-op
   [s]
-  (drop 4
-        (-> s
-            (str/replace "Operation: new" "")
-            (str/split #" "))))
+  (map #(cond
+          (= "old" %) :old
+          (#{"+" "*"} %) %
+          :else (bigint %))
+       (drop 4
+             (-> s
+                 (str/replace "Operation: new" "")
+                 (str/split #" ")))))
 
 (defn make-round-seq
   [no-of-monkeys]
   (repeat
    (range no-of-monkeys)))
-
-(take 2 (make-round-seq 10))
 
 (defn parse-monkey
   [s]
@@ -55,28 +59,31 @@ Monkey 3:
      :if-false (parse-long (re-find #"\d+" if-false))
      :inspections 0}))
 
+(def str->op
+  {"+" +
+   "*" *})
+
 (defn operate
   [stress xs]
   (let [[a op b] (->> xs
-                      (map #(if (= "old" %)
-                              (str stress)
+                      (map #(if (= :old %)
+                              stress
                               %)))]
-    ((resolve (symbol op))
-     (parse-long a)
-     (parse-long b))))
+    ((str->op op) a b)))
 
 (defn test-stress
   [test stress]
   (zero? (mod stress test)))
 
 (defn perform-turn
-  [state round]
+  [stress-divider state round]
   (loop [state' state]
     (if (empty? (get-in state' [round :items]))
       state'
       (let [m (get state' round)
             item (peek (:items m))
-            new-stress (long (/ (operate item (:operation m)) 3))
+            lcm (reduce nt/lcm (map :test state))
+            new-stress (bigint (/ (mod (operate item (:operation m)) lcm) stress-divider))
             test (test-stress (:test m) new-stress)]
         (recur
          (-> state'
@@ -85,20 +92,30 @@ Monkey 3:
              (update-in [(if test (:if-true m) (:if-false m)) :items] conj new-stress)))))))
 
 (defn perform-round
-  [state round]
-  (reduce perform-turn state round))
+  [stress-divider state round]
+  (reduce (partial perform-turn stress-divider) state round))
 
 (defn solve
-  [input]
+  [steps lower-stress-factor input]
   (let [state (->> (str/split input #"\n\n")
                    (mapv parse-monkey))
-        rounds (take 20 (make-round-seq (count state)))]
-    (->> (reduce perform-round state rounds)
+        rounds (take steps (make-round-seq (count state)))]
+    (->> (reduce (partial perform-round lower-stress-factor) state rounds)
          (sort-by :inspections)
          (reverse)
          (take 2)
          (map :inspections)
          (apply *))))
 
-(solve sample)
-(-> "resources/2022/day_11.txt" slurp solve)
+;; Part 1
+;; (solve 20 3 sample)
+;; (->> "resources/2022/day_11.txt" slurp (solve 20 3))
+
+;; Part 2
+;;
+;; Could not solve this one myself. Had to take to the internets.
+;; Thanks Clojurians slack.
+;; https://en.wikipedia.org/wiki/Least_common_multiple
+;;
+;; (solve 10000 1 sample)
+;; (->> "resources/2022/day_11.txt" slurp (solve 10000 1))
