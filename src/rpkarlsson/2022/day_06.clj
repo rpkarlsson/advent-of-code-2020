@@ -1,23 +1,17 @@
 (ns rpkarlsson.2022.day-06)
 
-(defn solve-1
-  []
+(defn solve
+  [repetitions]
   (->> "resources/2022/day_06.txt"
        slurp
-       (partition-all 4 1)
+       (partition-all repetitions 1)
        (reduce (fn [idx next]
-                 (if (= 4 (count (set next)))
+                 (if (apply distinct? next)
                    (reduced idx)
                    (inc idx)))
-               4)))
+               repetitions)))
+;; Part 1
+#_(solve 4)
 
-(defn solve-2
-  []
-  (->> "resources/2022/day_06.txt"
-       slurp
-       (partition-all 14 1)
-       (reduce (fn [idx next]
-                 (if (= 14 (count (set next)))
-                   (reduced idx)
-                   (inc idx)))
-               14)))
+;; Part 2
+#_(solve 14)
