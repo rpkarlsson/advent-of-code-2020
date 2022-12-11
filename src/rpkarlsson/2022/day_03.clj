@@ -29,14 +29,17 @@ CrZsJsPPZsGzwwsLwLmpwMDw")
       value
       (+ value 26))))
 
+(def collect-priorities-xf
+  (comp
+   (u/mmap char->priority)
+   (mapcat identity)))
+
 (defn solve
   [s]
-  (->> s
-       (str/split-lines)
-       (map find-intersection)
-       (u/mmap char->priority)
-       (mapcat identity)
-       (reduce +)))
+  (->> (str/split-lines s)
+       (transduce (comp (map find-intersection)
+                        collect-priorities-xf)
+                  +)))
 
 #_(solve sample)
 
@@ -46,14 +49,12 @@ CrZsJsPPZsGzwwsLwLmpwMDw")
 
 (defn solve-2
   [s]
-  (->> s
-       (str/split-lines)
+  (->> (str/split-lines s)
        (partition 3)
-       (u/mmap set)
-       (map (partial apply set/intersection))
-       (u/mmap char->priority)
-       (mapcat identity)
-       (reduce +)))
+       (transduce (comp (u/mmap set)
+                        (map (partial apply set/intersection))
+                        collect-priorities-xf)
+                  +)))
 
 #_(solve-2 sample)
 
