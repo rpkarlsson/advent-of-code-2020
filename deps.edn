@@ -4,7 +4,8 @@
  {org.clojure/clojure {:mvn/version "1.11.1"}
   org.clojure/math.combinatorics {:mvn/version "0.1.6"}
   org.clojure/math.numeric-tower {:mvn/version "0.0.5"}
-  criterium/criterium {:mvn/version "0.4.6"}}
+  criterium/criterium {:mvn/version "0.4.6"}
+  aysylu/loom {:mvn/version "1.0.2"}}
 
  :aliases
  {}}

@@ -1,12 +1,11 @@
-(ns rpkarlsson.utils)
-
+(ns rpkarlsson.utils
+  (:require [clojure.string :as str]))
 
 (defn mmap
   ([f]
    (map (partial map f)))
   ([f coll]
    (map (partial map f) coll)))
-
 
 (defn mcatmap
   ([f]
@@ -29,3 +28,23 @@
        (partition columns)
        (map vec)
        vec))
+
+(defn str->grid
+  [s]
+  (->> (str/split-lines s)
+       (map vec)
+       vec))
+
+(defn adjacent-coords
+  [[x y :as coord]]
+  (for [x1 (range -1 2)
+        y1 (range -1 2)
+        :when (not= coord  [(+ x x1) (+ y y1)])]
+    [(+ x x1) (+ y y1)]))
+
+(defn neighbour-coords
+  [[x y]]
+  [[(dec x) y]
+   [x (dec y)]
+   [x (inc y)]
+   [(inc x) y]])
